@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lab10AnropaDatabasen.Data;
+using System;
 using System.Collections.Generic;
 
 namespace Lab10_Anropa_databasen.Models

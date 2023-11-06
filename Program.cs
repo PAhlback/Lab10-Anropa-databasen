@@ -1,5 +1,7 @@
 ﻿using Lab10_Anropa_databasen.Models;
 using Lab10AnropaDatabasen.Data;
+using System;
+using System.Data.SqlTypes;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 
@@ -19,6 +21,7 @@ namespace Lab10_Anropa_databasen
         {
             while (true)
             {
+                Console.Clear();
                 Console.WriteLine("Welcome!");
                 Console.WriteLine();
                 Console.WriteLine("1. Show/select customer");
@@ -45,7 +48,7 @@ namespace Lab10_Anropa_databasen
                 }
                 else if(checkedChoice == 2)
                 {
-                    // Create new customer
+                    CreateCustomer(context);
                 }
                 else if(checkedChoice == 3)
                 {
@@ -64,17 +67,20 @@ namespace Lab10_Anropa_databasen
         static void ShowCustomers(NorthContext context)
         {
             Console.Clear();
+            Console.WriteLine("Order customers by ascending or descending (default = ascending)?");
+            Console.Write("A/D: ");
+            string ascOrDesc = Console.ReadLine().ToUpper();
             Console.WriteLine("Fetching customer data. Please wait...");
             Console.WriteLine();
 
             // Get the customers from the database
             var customerList = context.Customers
-                .Select(c => new 
-                { 
-                    c.CompanyName, 
-                    c.Country, 
-                    c.Region, 
-                    c.Phone, 
+                .Select(c => new
+                {
+                    c.CompanyName,
+                    c.Country,
+                    c.Region,
+                    c.Phone,
                     NrOfOrders = c.Orders.Count(),
                     c.ContactName,
                     c.ContactTitle,
@@ -86,6 +92,14 @@ namespace Lab10_Anropa_databasen
                 })
                 .OrderBy(c => c.CompanyName)
                 .ToList();
+            if (ascOrDesc == "D")
+            {
+                customerList
+                .OrderByDescending(c => c.CompanyName)
+                .ToList();
+            } 
+            
+            Console.Clear();
 
             // Print the customers, with a number for selecting customer
             int i = 1;
@@ -101,10 +115,11 @@ namespace Lab10_Anropa_databasen
                 i++;
             }
 
-            // Choose whether to select single customer or not. Has an
+            // Choose whether to select and view information about a single customer or not.
             Console.WriteLine("Select customer?");
             Console.Write("y/n: ");
             char yesNo = char.Parse(Console.ReadLine());
+
             if (yesNo == 'n')
             {
                 Console.WriteLine("Returning to main menu.");
@@ -126,7 +141,7 @@ namespace Lab10_Anropa_databasen
                 }
                 else
                 {
-                    Console.WriteLine("Contant: not found");
+                    Console.WriteLine("Contact: not found");
                 }
                 if (customerList[cNumber].Address != null)
                 {
@@ -172,6 +187,7 @@ namespace Lab10_Anropa_databasen
                     string date = order.OrderDate.ToString().Substring(0, 10);
                     Console.WriteLine($"{order.OrderId} - ordered product {order.ProductName} on {date}");
                 }
+                Console.WriteLine("Press enter to return to main menu");
                 Console.ReadLine();
             }
 
@@ -180,17 +196,80 @@ namespace Lab10_Anropa_databasen
         static void CreateCustomer(NorthContext context)
         {
             Console.Clear();
-            Console.WriteLine("Welcome to customer creation");
+            Console.WriteLine("Welcome to customer registration");
+            string[] inputArray = new string[9];
+
             Console.Write("Enter name: ");
-            string name = Console.ReadLine();
+            inputArray[0] = Console.ReadLine();
 
+            Console.Write("Enter name of contact person: ");
+            inputArray[1] = Console.ReadLine();
 
+            Console.Write("Enter title of contact person: ");
+            inputArray[2] = Console.ReadLine();
+
+            Console.Write("Enter address: ");
+            inputArray[3] = Console.ReadLine();
+
+            Console.Write("Enter city: ");
+            inputArray[4] = Console.ReadLine();
+
+            Console.Write("Enter postal code: ");
+            inputArray[5] = Console.ReadLine();
+
+            Console.Write("Enter country: ");
+            inputArray[6] = Console.ReadLine();
+
+            Console.Write("Enter phone: ");
+            inputArray[7] = Console.ReadLine();
+
+            Console.Write("Enter fax: ");
+            inputArray[8] = Console.ReadLine();
+
+            for (int i = 0; i < 9; i++)
+            {
+                inputArray[i] = (inputArray[i] == "") ? inputArray[i] : null;
+            }
+
+            char[] customerIdArray = new char[5];
+
+            if (inputArray[0].Length >= 5)
+            {
+                customerIdArray = inputArray[0].Substring(0, 5).ToUpper().ToCharArray();
+            }
+            else if (inputArray[0].Length < 5)
+            {
+                char[] letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+                Random random = new Random();
+                for (int i = 0; i < 5; i++)
+                {
+                    int r = random.Next(letters.Length);
+                    customerIdArray[i] = letters[r];
+                }
+            }
+            // Converting the char array to string
+            string customerId = new string(customerIdArray);
+            Console.WriteLine("Registering customer...");
 
             Customer customer = new Customer()
             {
-                CompanyName = 
+                CustomerId = customerId,
+                CompanyName = inputArray[0],
+                ContactName = inputArray[1],
+                ContactTitle = inputArray[2],
+                Address = inputArray[3],
+                City = inputArray[4],
+                PostalCode = inputArray[5],
+                Country = inputArray[6],
+                Phone = inputArray[7],
+                Fax = inputArray[8]
             };
+            context.Customers.Add(customer);
+            context.SaveChanges();
 
+            Console.WriteLine("Done!");
+            Console.WriteLine("Press enter to return to main menu");
+            Console.ReadLine();
         }
 
         static bool IsOnlyInt(string s)
